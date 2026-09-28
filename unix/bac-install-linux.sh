@@ -194,7 +194,7 @@ if ! [ -f "$extraction_checkpoint_path" ]; then
   rm -f "$client_checksum_path"
 
   # Checkpoint: All installer files have been extracted and ready for use.
-  touch "$installers_path/extracted"
+  touch "$extraction_checkpoint_path"
 
   echo "IBM Storage Protect has been installed!"
 fi
@@ -229,7 +229,7 @@ if ! [ -f "$installation_checkpoint_path" ]; then
   fi
 
   # Checkpoint: All installer files have been extracted and ready for use.
-  touch "$installers_path/installed"
+  touch "$installation_checkpoint_path"
 
   echo "IBM Storage Protect has been installed!"
 fi
