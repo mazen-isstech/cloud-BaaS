@@ -6,7 +6,7 @@
 # Usage (download+installation+configuration+start scheduler):
 # - ./install_sp_client.sh node_name node_password server_host server_port
 #
-# Tested on:
+# Version 1.0 tested on:
 # - Rocky Linux 8 & 9
 # - Debian 12 (bookworm) & 13 (trixie)
 # - Ubuntu 20.04 (focal) & Ubuntu 22.04 (jammy) & 24.04 (questing) & 26.04 (resolute)
@@ -15,8 +15,11 @@
 # Support: https://docs.safespring.com/service/support/
 #
 # Author: Mazen Mardini <mazen.mardini@isstech.io> / <mazen.mardini@safespring.com>
-# Date: 2026-09-25
-# Version: 1
+# Version: 1.1
+# 
+# Changelog:
+# Version 1.0 (2026-09-25) - Initial release
+# Version 1.1 (2026-11-23) - Always restart the scheduler service if it's already running.
 
 # Bash error handling
 set -Eeuo pipefail
@@ -150,6 +153,9 @@ replace_opt() {
 # Before starting, install dependencies
 install_deps
 
+# Determine if (re-)configuration was requested.
+reconfiguration_requested="$node_name"
+
 # Prepare URLs and paths
 client_url="$(latest_sp_client_url)"
 client_checksum_url="${client_url}.sha256sum.txt"
@@ -194,7 +200,7 @@ if ! [ -f "$extraction_checkpoint_path" ]; then
   rm -f "$client_checksum_path"
 
   # Checkpoint: All installer files have been extracted and ready for use.
-  touch "$extraction_checkpoint_path"
+  touch "$installers_path/extracted"
 
   echo "IBM Storage Protect has been installed!"
 fi
@@ -228,14 +234,21 @@ if ! [ -f "$installation_checkpoint_path" ]; then
     echo -e "\n\n" | sudo tee --append "$dsm_sys_sample_path"
   fi
 
+  # Restart backup scheduler if it's already running.
+  backup_scheduler_state="$(systemctl show dsmcad.service -P ActiveState)"
+  if [[ $backup_scheduler_state == "active" && ! $reconfiguration_requested ]]; then
+    echo "Backup scheduler (dsmcad.service) is already running, restarting it now."
+    systemctl restart dsmcad.service
+  fi
+
   # Checkpoint: All installer files have been extracted and ready for use.
-  touch "$installation_checkpoint_path"
+  touch "$installers_path/installed"
 
   echo "IBM Storage Protect has been installed!"
 fi
 
 # Configure the client if the user asked for it (arguments were defined)
-if test -n "$node_name"; then
+if [[ $reconfiguration_requested ]]; then
   # Create configuration files
   dsm_opt_path="/opt/tivoli/tsm/client/ba/bin/dsm.opt"
   dsm_sys_path="/opt/tivoli/tsm/client/ba/bin/dsm.sys"
