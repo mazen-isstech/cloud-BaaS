@@ -236,7 +236,7 @@ if ! [ -f "$installation_checkpoint_path" ]; then
 
   # Restart backup scheduler if it's already running.
   backup_scheduler_state="$(systemctl show dsmcad.service -P ActiveState)"
-  if [[ $backup_scheduler_state == "active" && ! $reconfiguration_requested ]]; then
+  if [[ $backup_scheduler_state == "active" && ! "$reconfiguration_requested" ]]; then
     echo "Backup scheduler (dsmcad.service) is already running, restarting it now."
     systemctl restart dsmcad.service
   fi
@@ -248,7 +248,7 @@ if ! [ -f "$installation_checkpoint_path" ]; then
 fi
 
 # Configure the client if the user asked for it (arguments were defined)
-if [[ $reconfiguration_requested ]]; then
+if [[ "$reconfiguration_requested" ]]; then
   # Create configuration files
   dsm_opt_path="/opt/tivoli/tsm/client/ba/bin/dsm.opt"
   dsm_sys_path="/opt/tivoli/tsm/client/ba/bin/dsm.sys"
